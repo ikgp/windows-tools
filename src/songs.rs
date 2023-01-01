@@ -1,4 +1,4 @@
-use crate::windows::beep;
+use crate::beep;
 use std::thread::sleep;
 use std::time::Duration;
 
