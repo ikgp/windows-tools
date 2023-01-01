@@ -93,13 +93,13 @@ async fn execute_js(main_module: &Url) -> Result<(), AnyError> {
     let isolate = &mut worker.js_runtime;
     {
         let scope = &mut isolate.handle_scope();
-        let context = v8::Context::new(scope);
+        let context = scope.get_current_context();
         let global = context.global(scope);
         let scope = &mut v8::ContextScope::new(scope, context);
 
         // KantBeep(freq: number, duration: number)
-        let my_func_key = v8::String::new(scope, "KantBeep").unwrap();
-        let my_func_templ = v8::FunctionTemplate::new(
+        let kant_beep_key = v8::String::new(scope, "KantBeep").unwrap();
+        let kant_beep_templ = v8::FunctionTemplate::new(
             scope,
             |scope: &mut v8::HandleScope,
              args: v8::FunctionCallbackArguments,
@@ -120,11 +120,10 @@ async fn execute_js(main_module: &Url) -> Result<(), AnyError> {
                 }
             },
         );
-        let my_func_val = my_func_templ.get_function(scope).unwrap();
-
-        global.set(scope, my_func_key.into(), my_func_val.into());
+        let kant_beep_val = kant_beep_templ.get_function(scope).unwrap();
+        global.set(scope, kant_beep_key.into(), kant_beep_val.into());
     }
-    worker.run_event_loop(false).await?;
+    worker.execute_main_module(main_module).await?;
     Ok(())
 }
 

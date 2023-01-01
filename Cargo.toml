@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = { version = "1.0.68", features = ["backtrace"] }
 deno_core = "0.164.0"
 deno_runtime = "0.90.0"
+reqwest = "0.11.13"
 tokio = "1.21.1"
 
 [target.'cfg(windows)'.dependencies]
