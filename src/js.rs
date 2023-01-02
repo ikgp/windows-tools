@@ -13,6 +13,8 @@ use deno_runtime::permissions::Permissions;
 use deno_runtime::worker::MainWorker;
 use deno_runtime::worker::WorkerOptions;
 use deno_runtime::BootstrapOptions;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 use std::path::Path;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -135,6 +137,20 @@ pub async fn execute_js_from_path(path: &Path) -> Result<(), AnyError> {
 
 pub async fn execute_js_from_url(url: &str) -> Result<(), AnyError> {
     let url = Url::parse(url)?;
-    execute_js(&url).await?;
+
+    let mut response = reqwest::get(url.clone()).await?;
+
+    let tempdir = tempfile::tempdir()?;
+    let tempfile_path = tempdir.path().join("main.js");
+    let mut tempfile = File::create(&tempfile_path).await?;
+    // Write response to file
+    while let Some(chunk) = response.chunk().await? {
+        tempfile.write_all(&chunk).await?;
+    }
+    tempfile.flush().await?;
+    tempfile.shutdown().await?;
+    let main_module = deno_core::resolve_path(&tempfile_path.to_string_lossy())?;
+    execute_js(&main_module).await?;
+    tempdir.close()?;
     Ok(())
 }

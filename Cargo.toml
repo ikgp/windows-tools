@@ -9,11 +9,13 @@ edition = "2021"
 anyhow = { version = "1.0.68", features = ["backtrace"] }
 deno_core = "0.164.0"
 deno_runtime = "0.90.0"
-reqwest = "0.11.13"
+lazy_static = "1.4.0"
+reqwest = { version = "0.11.13", features = ["tokio-rustls", "rustls"], default-features = false }
+tempfile = "3.3.0"
 tokio = "1.21.1"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.43.0", features = ["Win32_Graphics_Gdi", "Win32_Foundation", "Win32_System_Diagnostics_Debug"] }
 
 [target.'cfg(unix)'.dependencies]
-beep = "0.3.0"
+nix = { version = "0.26.1", default-features = false, features = ["fs", "ioctl"] }
