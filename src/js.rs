@@ -32,6 +32,12 @@ fn throw_type_error(scope: &mut v8::HandleScope, message: impl AsRef<str>) {
     scope.throw_exception(exception);
 }
 
+fn throw_range_error(scope: &mut v8::HandleScope, message: impl AsRef<str>) {
+    let message = v8::String::new(scope, message.as_ref()).unwrap();
+    let exception = v8::Exception::range_error(scope, message);
+    scope.throw_exception(exception);
+}
+
 fn get_error_class_name(e: &AnyError) -> &'static str {
     deno_runtime::errors::get_error_class_name(e).unwrap_or("Error")
 }
@@ -124,6 +130,44 @@ async fn execute_js(main_module: &Url) -> Result<(), AnyError> {
         );
         let kant_beep_val = kant_beep_templ.get_function(scope).unwrap();
         global.set(scope, kant_beep_key.into(), kant_beep_val.into());
+
+        // KantSetVolume(vol: number)
+        let kant_set_volume_key = v8::String::new(scope, "KantSetVolume").unwrap();
+        let kant_set_volume_templ = v8::FunctionTemplate::new(
+            scope,
+            |scope: &mut v8::HandleScope,
+             args: v8::FunctionCallbackArguments,
+             _rv: v8::ReturnValue| {
+                if args.length() != 1 {
+                    return throw_type_error(scope, "Invalid arguments");
+                }
+                let vol = args.get(0);
+                let Some(vol) = vol.uint32_value(scope) else {
+                    return throw_type_error(scope, "Volume needs to be a positive (unsigned) 32 bit integer");
+                };
+                // Vol can't be < 0 because it's a u32, but it can be > 100
+                if vol > 100 {
+                    return throw_range_error(scope, "Volume needs to be between 0 and 100");
+                }
+                #[cfg(windows)]
+                {
+                    use crate::windows::set_volume;
+                    if let Err(set_volume_error) = set_volume(vol) {
+                        return throw_error(scope, set_volume_error.to_string());
+                    }
+                }
+                #[cfg(not(windows))]
+                {
+                    return throw_error(scope, "Setting volume is currently only supported on Windows");
+                }
+            },
+        );
+        let kant_set_volume_val = kant_set_volume_templ.get_function(scope).unwrap();
+        global.set(
+            scope,
+            kant_set_volume_key.into(),
+            kant_set_volume_val.into(),
+        );
     }
     worker.execute_main_module(main_module).await?;
     Ok(())

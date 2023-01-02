@@ -2,6 +2,13 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+try {
+    // Sets the volume to 80%
+    KantSetVolume(80);
+} catch (e) {
+    console.error(e);
+}
+
 KantBeep(658, 125);
 KantBeep(1320, 500);
 KantBeep(990, 250);
