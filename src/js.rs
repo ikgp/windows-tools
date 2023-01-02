@@ -13,12 +13,12 @@ use deno_runtime::permissions::Permissions;
 use deno_runtime::worker::MainWorker;
 use deno_runtime::worker::WorkerOptions;
 use deno_runtime::BootstrapOptions;
-use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
 use std::path::Path;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 
 fn throw_error(scope: &mut v8::HandleScope, message: impl AsRef<str>) {
     let message = v8::String::new(scope, message.as_ref()).unwrap();
