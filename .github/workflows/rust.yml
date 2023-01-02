@@ -11,7 +11,11 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
@@ -19,8 +23,13 @@ jobs:
       run: cargo build --verbose --release
     - name: Upload the compiled executable
       uses: actions/upload-artifact@v3
+      if: matrix.os == 'windows-latest'
       with:
-        # Artifact name
-        name: kant.exe
-        # A file, directory or wildcard pattern that describes what to upload
+        name: kant-tools.exe
         path: target/release/kant-tools.exe
+    - name: Upload the compiled executable
+      uses: actions/upload-artifact@v3
+      if: matrix.os != 'windows-latest'
+      with:
+        name: kant-tools_${{ matrix.os }}
+        path: target/release/kant-tools
