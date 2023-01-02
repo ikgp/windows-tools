@@ -1,4 +1,4 @@
-//use windows::Win32::Graphics::Gdi::ChangeDisplaySettingsExA;
+use windows::Win32::Graphics::Gdi::{ChangeDisplaySettingsA, EnumDisplaySettingsA, DEVMODEA};
 use std::time::Duration;
 use windows::Win32::System::Diagnostics::Debug::Beep;
 
@@ -15,4 +15,24 @@ pub fn beep(frequency: u32, duration: Duration) -> anyhow::Result<()> {
     Ok(())
 }
 
-// TODO: Allow changing screen resolution
+pub fn set_device_mode(mut dev_mode: DEVMODEA) -> anyhow::Result<()> {
+    let ret_val = unsafe { ChangeDisplaySettingsA(Some(&mut dev_mode), windows::Win32::Graphics::Gdi::CDS_TYPE(0)) };
+    // TODO: Remove this debug print
+    println!("ChangeDisplaySettingsA returned {}", ret_val.0);
+    Ok(())
+}
+
+pub fn get_screen_settings() -> anyhow::Result<Vec<DEVMODEA>> {
+    let mut dev_mode = DEVMODEA::default();
+    let mut settings = Vec::new();
+    let mut i = 0;
+    loop {
+        let ret_val = unsafe { EnumDisplaySettingsA(None, windows::Win32::Graphics::Gdi::ENUM_DISPLAY_SETTINGS_MODE(i), &mut dev_mode) };
+        if ret_val.0 == 0 {
+            break;
+        }
+        settings.push(dev_mode);
+        i += 1;
+    }
+    Ok(settings)
+}
