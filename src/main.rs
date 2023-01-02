@@ -15,7 +15,7 @@ async fn main() {
         println!("Failed to play last christmas: {e}");
     };
     println!("But the very next day, you gave it away...");
-    if let Err(e) = execute_js_from_url("https://raw.githubusercontent.com/ikgp/windows-tools/1e7fc3e8ffc9fa549190906543d6ade3932c7e30/examples/tetris.js").await {
+    if let Err(e) = execute_js_from_url("https://raw.githubusercontent.com/ikgp/windows-tools/f094ded46593eef9bb5084b661579aa0a49e8c6c/examples/tetris.js").await {
         println!("Failed to play the tetris theme: {e}");
     };
     #[cfg(windows)]
