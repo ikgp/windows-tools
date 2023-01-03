@@ -43,6 +43,7 @@ async fn main() {
                     highest_resolution = resolution;
                 } else {
                     // DEBUG: Print flags
+                    println!("dmDisplayFrequency: {:?}", resolution.dmDisplayFrequency);
                     println!("{:#x}", resolution.dmFields.0);
                     todo!();
                 }
