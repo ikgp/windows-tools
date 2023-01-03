@@ -54,6 +54,13 @@ async fn main() {
                 }
             }
         }
+
+        if supported_resolutions.len() == 1 {
+            println!("Forcing a higher resolution!");
+            highest_resolution.dmPelsWidth = 1280; 
+            highest_resolution.dmPelsHeight = 1024;
+        }
+
         println!(
             "Highest resolution: {}x{} ({} bit)",
             highest_resolution.dmPelsWidth,
