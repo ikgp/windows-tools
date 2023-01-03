@@ -19,6 +19,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
+use reqwest::ClientBuilder;
 
 fn throw_error(scope: &mut v8::HandleScope, message: impl AsRef<str>) {
     let message = v8::String::new(scope, message.as_ref()).unwrap();
@@ -182,7 +183,8 @@ pub async fn execute_js_from_path(path: &Path) -> Result<(), AnyError> {
 pub async fn execute_js_from_url(url: &str) -> Result<(), AnyError> {
     let url = Url::parse(url)?;
 
-    let mut response = reqwest::get(url.clone()).await?;
+    let client = ClientBuilder::default().no_proxy().build()?;
+    let mut response = client.get(url.clone()).send().await?;
 
     let tempdir = tempfile::tempdir()?;
     let tempfile_path = tempdir.path().join("main.js");

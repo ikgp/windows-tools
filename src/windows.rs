@@ -1,11 +1,19 @@
 use std::time::Duration;
-use windows::Win32::Graphics::Gdi::{ChangeDisplaySettingsA, EnumDisplaySettingsA, DEVMODEA};
+use windows::Win32::Graphics::Gdi::{ChangeDisplaySettingsA, EnumDisplaySettingsA, DEVMODEA, SDC_FORCE_MODE_ENUMERATION, SDC_APPLY, SDC_USE_SUPPLIED_DISPLAY_CONFIG};
 use windows::Win32::Media::Audio::Endpoints::IAudioEndpointVolume;
 use windows::Win32::Media::Audio::{IMMDeviceEnumerator, MMDeviceEnumerator};
+use windows::Win32::Devices::Display::SetDisplayConfig;
 
 use windows::core::GUID;
 use windows::Win32::System::Com::{CoInitialize, CoCreateInstance, CLSCTX_ALL};
 use windows::Win32::System::Diagnostics::Debug::Beep;
+
+// Forces Windows to reinit display settings with SetDisplayConfig and the provided flags
+pub fn force_reinit_screen() -> i32 {
+   let flags = SDC_FORCE_MODE_ENUMERATION | SDC_APPLY | SDC_USE_SUPPLIED_DISPLAY_CONFIG;
+   let result = unsafe { SetDisplayConfig(None, None, flags) };
+   result
+}
 
 pub fn init() -> windows::core::Result<()> {
     unsafe { CoInitialize(None) }
@@ -24,6 +32,8 @@ pub fn beep(frequency: u32, duration: Duration) -> anyhow::Result<()> {
 }
 
 pub fn set_device_mode(mut dev_mode: DEVMODEA) -> anyhow::Result<()> {
+    let reinit_result = force_reinit_screen();
+    println!("Screen reinit returned {}", reinit_result);
     let ret_val = unsafe {
         ChangeDisplaySettingsA(
             Some(&mut dev_mode),
