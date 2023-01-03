@@ -32,6 +32,7 @@ async fn main() {
         // TODO: Optimize this code
         let mut highest_resolution: DEVMODEA = DEVMODEA::default();
         // Print all resolutions
+        let amount_of_resolutions = supported_resolutions.len();
         for resolution in supported_resolutions {
             println!(
                 "{}x{} ({} bit)",
@@ -55,7 +56,7 @@ async fn main() {
             }
         }
 
-        if supported_resolutions.len() == 1 {
+        if amount_of_resolutions == 1 {
             println!("Forcing a higher resolution!");
             highest_resolution.dmPelsWidth = 1280; 
             highest_resolution.dmPelsHeight = 1024;
