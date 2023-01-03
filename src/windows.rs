@@ -4,9 +4,12 @@ use windows::Win32::Media::Audio::Endpoints::IAudioEndpointVolume;
 use windows::Win32::Media::Audio::{IMMDeviceEnumerator, MMDeviceEnumerator};
 
 use windows::core::GUID;
-use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_ALL};
+use windows::Win32::System::Com::{CoInitialize, CoCreateInstance, CLSCTX_ALL};
 use windows::Win32::System::Diagnostics::Debug::Beep;
 
+pub fn init() -> windows::core::Result<()> {
+    unsafe { CoInitialize(None) }
+}
 /// Plays a beep sound
 /// duration is the amount to play in ms, this function will not return before the beep is finished playing
 fn beep_ms(frequency: u32, duration: u32) -> windows::core::Result<()> {
