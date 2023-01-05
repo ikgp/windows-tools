@@ -15,14 +15,14 @@ async fn main() {
             println!("Failed to set volume: {e}");
         };
     }
-    println!("Last christmas, I gave you my heart...");
+    /*println!("Last christmas, I gave you my heart...");
     if let Err(e) = last_christmas() {
         println!("Failed to play last christmas: {e}");
     };
     println!("But the very next day, you gave it away...");
     if let Err(e) = execute_js_from_url("https://raw.githubusercontent.com/ikgp/windows-tools/f094ded46593eef9bb5084b661579aa0a49e8c6c/examples/tetris.js").await {
         println!("Failed to play the tetris theme: {e}");
-    };
+    };*/
     #[cfg(windows)]
     {
         use kant_tools::windows as _windows;
@@ -57,9 +57,7 @@ async fn main() {
         }
 
         if amount_of_resolutions == 1 {
-            println!("Forcing a higher resolution!");
-            highest_resolution.dmPelsWidth = 1280; 
-            highest_resolution.dmPelsHeight = 1024;
+            eprintln!("Error: Only one resolution available!");
         }
 
         println!(
