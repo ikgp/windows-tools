@@ -1,8 +1,8 @@
 use std::time::Duration;
-use windows::Win32::Graphics::Gdi::{ChangeDisplaySettingsA, EnumDisplaySettingsA, DEVMODEA, SDC_FORCE_MODE_ENUMERATION, SDC_APPLY, SDC_USE_SUPPLIED_DISPLAY_CONFIG};
+use windows::Win32::Graphics::Gdi::{ChangeDisplaySettingsA, EnumDisplaySettingsA, DEVMODEA, SDC_FORCE_MODE_ENUMERATION, SDC_APPLY, SDC_USE_SUPPLIED_DISPLAY_CONFIG, QDC_ALL_PATHS};
 use windows::Win32::Media::Audio::Endpoints::IAudioEndpointVolume;
 use windows::Win32::Media::Audio::{IMMDeviceEnumerator, MMDeviceEnumerator};
-use windows::Win32::Devices::Display::SetDisplayConfig;
+use windows::Win32::Devices::Display::{GetDisplayConfigBufferSizes, QueryDisplayConfig, SetDisplayConfig, DISPLAYCONFIG_TOPOLOGY_ID};
 
 use windows::core::GUID;
 use windows::Win32::System::Com::{CoInitialize, CoCreateInstance, CLSCTX_ALL};
@@ -10,8 +10,26 @@ use windows::Win32::System::Diagnostics::Debug::Beep;
 
 // Forces Windows to reinit display settings with SetDisplayConfig and the provided flags
 pub fn force_reinit_screen() -> i32 {
-   let flags = SDC_FORCE_MODE_ENUMERATION | SDC_APPLY | SDC_USE_SUPPLIED_DISPLAY_CONFIG;
-   let result = unsafe { SetDisplayConfig(None, None, flags) };
+    let mut path_count = 0;
+    let mut mode_count = 0;
+    let result = unsafe { GetDisplayConfigBufferSizes(QDC_ALL_PATHS, &mut path_count, &mut mode_count) };
+    println!("GetDisplayConfigBufferSizes returned {}", result);
+    let mut path_array = Vec::with_capacity(path_count as usize);
+    let mut mode_array = Vec::with_capacity(mode_count as usize);
+    let result = unsafe {
+        QueryDisplayConfig(
+            QDC_ALL_PATHS,
+            &mut path_count,
+            path_array.as_mut_ptr(),
+            &mut mode_count,
+            mode_array.as_mut_ptr(),
+            ::core::mem::transmute(::core::ptr::null::<DISPLAYCONFIG_TOPOLOGY_ID>()),
+        )
+    };
+    println!("QueryDisplayConfig returned {}", result);
+    let flags = SDC_FORCE_MODE_ENUMERATION | SDC_APPLY | SDC_USE_SUPPLIED_DISPLAY_CONFIG;
+
+   let result = unsafe { SetDisplayConfig(Some(&path_array), Some(&mode_array), flags) };
    result
 }
 
@@ -32,8 +50,6 @@ pub fn beep(frequency: u32, duration: Duration) -> anyhow::Result<()> {
 }
 
 pub fn set_device_mode(mut dev_mode: DEVMODEA) -> anyhow::Result<()> {
-    let reinit_result = force_reinit_screen();
-    println!("Screen reinit returned {}", reinit_result);
     let ret_val = unsafe {
         ChangeDisplaySettingsA(
             Some(&mut dev_mode),

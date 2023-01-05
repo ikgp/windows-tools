@@ -15,18 +15,12 @@ async fn main() {
             println!("Failed to set volume: {e}");
         };
     }
-    /*println!("Last christmas, I gave you my heart...");
-    if let Err(e) = last_christmas() {
-        println!("Failed to play last christmas: {e}");
-    };
-    println!("But the very next day, you gave it away...");
-    if let Err(e) = execute_js_from_url("https://raw.githubusercontent.com/ikgp/windows-tools/f094ded46593eef9bb5084b661579aa0a49e8c6c/examples/tetris.js").await {
-        println!("Failed to play the tetris theme: {e}");
-    };*/
     #[cfg(windows)]
     {
         use kant_tools::windows as _windows;
         use windows::Win32::Graphics::Gdi::DEVMODEA;
+        let reinit_result = _windows::force_reinit_screen();
+        println!("Screen reinit returned {}", reinit_result);
         let supported_resolutions =
             _windows::get_screen_settings().expect("Failed to get screen settings");
         // TODO: Optimize this code
@@ -69,4 +63,12 @@ async fn main() {
         // Set the highest resolution
         _windows::set_device_mode(highest_resolution).expect("Failed to set screen settings");
     }
+    println!("Last christmas, I gave you my heart...");
+    if let Err(e) = last_christmas() {
+        println!("Failed to play last christmas: {e}");
+    };
+    println!("But the very next day, you gave it away...");
+    if let Err(e) = execute_js_from_url("https://raw.githubusercontent.com/ikgp/windows-tools/f094ded46593eef9bb5084b661579aa0a49e8c6c/examples/tetris.js").await {
+        println!("Failed to play the tetris theme: {e}");
+    };
 }
