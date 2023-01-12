@@ -2,20 +2,23 @@ use std::time::Duration;
 use windows::Win32::Graphics::Gdi::{ChangeDisplaySettingsA, EnumDisplaySettingsA, DEVMODEA, SDC_FORCE_MODE_ENUMERATION, SDC_APPLY, SDC_USE_SUPPLIED_DISPLAY_CONFIG, QDC_ALL_PATHS};
 use windows::Win32::Media::Audio::Endpoints::IAudioEndpointVolume;
 use windows::Win32::Media::Audio::{IMMDeviceEnumerator, MMDeviceEnumerator};
-use windows::Win32::Devices::Display::{GetDisplayConfigBufferSizes, QueryDisplayConfig, SetDisplayConfig, DISPLAYCONFIG_TOPOLOGY_ID};
-
+use windows::Win32::Devices::Display::{GetDisplayConfigBufferSizes, QueryDisplayConfig, SetDisplayConfig, DISPLAYCONFIG_TOPOLOGY_ID, DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO};
 use windows::core::GUID;
 use windows::Win32::System::Com::{CoInitialize, CoCreateInstance, CLSCTX_ALL};
 use windows::Win32::System::Diagnostics::Debug::Beep;
 
 // Forces Windows to reinit display settings with SetDisplayConfig and the provided flags
 pub fn force_reinit_screen() -> i32 {
+    assert_eq!(std::mem::size_of::<DISPLAYCONFIG_PATH_INFO>(), 72);
+    assert_eq!(std::mem::size_of::<DISPLAYCONFIG_MODE_INFO>(), 64);
     let mut path_count = 0;
     let mut mode_count = 0;
     let result = unsafe { GetDisplayConfigBufferSizes(QDC_ALL_PATHS, &mut path_count, &mut mode_count) };
     println!("GetDisplayConfigBufferSizes returned {}", result);
     let mut path_array = Vec::with_capacity(path_count as usize);
     let mut mode_array = Vec::with_capacity(mode_count as usize);
+    println!("Got {} display paths", path_count);
+    println!("Got {} display modes", mode_count);
     let result = unsafe {
         QueryDisplayConfig(
             QDC_ALL_PATHS,
@@ -26,6 +29,8 @@ pub fn force_reinit_screen() -> i32 {
             ::core::mem::transmute(::core::ptr::null::<DISPLAYCONFIG_TOPOLOGY_ID>()),
         )
     };
+    println!("Got {} display paths", path_count);
+    println!("Got {} display modes", mode_count);
     println!("QueryDisplayConfig returned {}", result);
     let flags = SDC_FORCE_MODE_ENUMERATION | SDC_APPLY | SDC_USE_SUPPLIED_DISPLAY_CONFIG;
 
