@@ -1,5 +1,5 @@
 use std::time::Duration;
-use windows::Win32::Graphics::Gdi::{ChangeDisplaySettingsA, EnumDisplaySettingsA, DEVMODEA, SDC_FORCE_MODE_ENUMERATION, SDC_APPLY, SDC_USE_SUPPLIED_DISPLAY_CONFIG, QDC_ALL_PATHS};
+use windows::Win32::Graphics::Gdi::{ChangeDisplaySettingsA, EnumDisplaySettingsA, DEVMODEA, SDC_FORCE_MODE_ENUMERATION, SDC_APPLY, SDC_SAVE_TO_DATABASE, SDC_USE_SUPPLIED_DISPLAY_CONFIG, QDC_ALL_PATHS};
 use windows::Win32::Media::Audio::Endpoints::IAudioEndpointVolume;
 use windows::Win32::Media::Audio::{IMMDeviceEnumerator, MMDeviceEnumerator};
 use windows::Win32::Devices::Display::{GetDisplayConfigBufferSizes, QueryDisplayConfig, SetDisplayConfig, DISPLAYCONFIG_TOPOLOGY_ID, DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO};
@@ -32,7 +32,7 @@ pub fn force_reinit_screen() -> i32 {
     println!("Got {} display paths", path_count);
     println!("Got {} display modes", mode_count);
     println!("QueryDisplayConfig returned {}", result);
-    let flags = SDC_FORCE_MODE_ENUMERATION | SDC_APPLY | SDC_USE_SUPPLIED_DISPLAY_CONFIG;
+    let flags = SDC_FORCE_MODE_ENUMERATION | SDC_APPLY | SDC_USE_SUPPLIED_DISPLAY_CONFIG | SDC_SAVE_TO_DATABASE;
 
    let result = unsafe { SetDisplayConfig(Some(&path_array), Some(&mode_array), flags) };
    result
