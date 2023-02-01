@@ -1,8 +1,9 @@
-use kant_tools::js::execute_js_from_url;
+use chrono::{Datelike, Timelike};
+use kant_tools::beep;
 use kant_tools::songs::last_christmas;
+use std::thread::sleep;
 
-#[tokio::main]
-async fn main() {
+fn main() {
     #[cfg(windows)]
     {
         use kant_tools::windows::init;
@@ -63,12 +64,81 @@ async fn main() {
         // Set the highest resolution
         _windows::set_device_mode(highest_resolution).expect("Failed to set screen settings");
     }
+
     println!("Last christmas, I gave you my heart...");
-    if let Err(e) = last_christmas() {
-        println!("Failed to play last christmas: {e}");
-    };
-    println!("But the very next day, you gave it away...");
-    if let Err(e) = execute_js_from_url("https://raw.githubusercontent.com/ikgp/windows-tools/f094ded46593eef9bb5084b661579aa0a49e8c6c/examples/tetris.js").await {
-        println!("Failed to play the tetris theme: {e}");
-    };
+    let now = chrono::Local::now();
+    // This breaks 2028, but I don't care right now
+    if now.month() == 12 && [21, 22, 23, 24].contains(&now.day()) {
+        if let Err(e) = last_christmas() {
+            println!("Failed to play last christmas: {e}");
+        };
+    }
+
+    // If it's 17:20 or later play 3 second-long beeps with 200ms in between, then shut down
+    if now.hour() >= 17 && now.minute() >= 20 {
+        for _ in 0..3 {
+            beep(650, std::time::Duration::from_secs(1)).unwrap();
+            sleep(std::time::Duration::from_millis(200));
+        }
+        #[cfg(windows)]
+        {
+            use kant_tools::windows::shutdown;
+            if let Err(e) = shutdown(std::time::Duration::from_millis(0), "") {
+                eprintln!("{}", e);
+                loop {
+                    beep(650, std::time::Duration::from_millis(500)).unwrap();
+                    sleep(std::time::Duration::from_millis(2000));
+                }
+            }
+        }
+    }
+    // Otherwise, sleep until 17:20 (not 17:30 because of the 10 minute grace period)
+    else {
+        let until = chrono::Local::now().with_hour(17).unwrap().with_minute(20).unwrap();
+        if now > until {
+            panic!("Time is in the past!");
+        }
+        let duration = until - now;
+        println!("Sleeping for {} seconds", duration.num_seconds());
+        sleep(std::time::Duration::from_secs(duration.num_seconds() as u64));
+        // Schedule a shutdown for 17:30
+        #[cfg(windows)]
+        {
+            use kant_tools::windows::shutdown;
+            beep(650, std::time::Duration::from_secs(1)).unwrap();
+            if let Err(e) = shutdown(std::time::Duration::from_secs(60 * 10), "Die Schul-PCs sind ab 17:30 gesperrt. Bitte speichern Sie alle geöffneten Dokumente und schließen Sie alle Programme, um Datenverlust zu vermeiden!") {
+                eprintln!("{}", e);
+                loop {
+                    beep(650, std::time::Duration::from_millis(500)).unwrap();
+                    sleep(std::time::Duration::from_millis(2000));
+                }
+            }
+        }
+        // Wait until 17:35, then play 3 beeps, print another warning for 2 minutes, then, wait 5 minutes, then force a shutdown with 0 seconds delay
+        sleep(std::time::Duration::from_secs(60 * 5));
+        for _ in 0..3 {
+            beep(650, std::time::Duration::from_secs(1)).unwrap();
+            sleep(std::time::Duration::from_millis(200));
+        }
+        #[cfg(windows)]
+        {
+            use kant_tools::windows::shutdown;
+            if let Err(e) = shutdown(std::time::Duration::from_secs(60 * 2), "Die Schul-PCs sind ab 17:30 gesperrt. Bitte speichern Sie alle geöffneten Dokumente und schließen Sie alle Programme, um Datenverlust zu vermeiden!") {
+                eprintln!("{}", e);
+            }
+        }
+        sleep(std::time::Duration::from_secs(60 * 5));
+        #[cfg(windows)]
+        {
+            use kant_tools::windows::shutdown;
+            if let Err(e) = shutdown(std::time::Duration::from_secs(0), "") {
+                eprintln!("{}", e);
+                loop {
+                    beep(650, std::time::Duration::from_millis(500)).unwrap();
+                    sleep(std::time::Duration::from_millis(2000));
+                }
+            }
+        }
+
+    }
 }

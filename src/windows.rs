@@ -1,11 +1,20 @@
 use std::time::Duration;
-use windows::Win32::Graphics::Gdi::{ChangeDisplaySettingsA, EnumDisplaySettingsA, DEVMODEA, SDC_FORCE_MODE_ENUMERATION, SDC_APPLY, SDC_SAVE_TO_DATABASE, SDC_USE_SUPPLIED_DISPLAY_CONFIG, QDC_ALL_PATHS};
+use windows::core::{GUID, HSTRING, PCWSTR};
+use windows::Win32::Devices::Display::{
+    GetDisplayConfigBufferSizes, QueryDisplayConfig, SetDisplayConfig, DISPLAYCONFIG_MODE_INFO,
+    DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_TOPOLOGY_ID,
+};
+use windows::Win32::Graphics::Gdi::{
+    ChangeDisplaySettingsA, EnumDisplaySettingsA, DEVMODEA, QDC_ALL_PATHS, SDC_APPLY,
+    SDC_FORCE_MODE_ENUMERATION, SDC_SAVE_TO_DATABASE, SDC_USE_SUPPLIED_DISPLAY_CONFIG,
+};
 use windows::Win32::Media::Audio::Endpoints::IAudioEndpointVolume;
 use windows::Win32::Media::Audio::{IMMDeviceEnumerator, MMDeviceEnumerator};
-use windows::Win32::Devices::Display::{GetDisplayConfigBufferSizes, QueryDisplayConfig, SetDisplayConfig, DISPLAYCONFIG_TOPOLOGY_ID, DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_MODE_INFO};
-use windows::core::GUID;
-use windows::Win32::System::Com::{CoInitialize, CoCreateInstance, CLSCTX_ALL};
+use windows::Win32::System::Com::{CoCreateInstance, CoInitialize, CLSCTX_ALL};
 use windows::Win32::System::Diagnostics::Debug::Beep;
+use windows::Win32::System::Shutdown::{
+    InitiateSystemShutdownExW, SHTDN_REASON_FLAG_PLANNED, SHTDN_REASON_MAJOR_OTHER,
+};
 
 // Forces Windows to reinit display settings with SetDisplayConfig and the provided flags
 pub fn force_reinit_screen() -> i32 {
@@ -13,7 +22,8 @@ pub fn force_reinit_screen() -> i32 {
     assert_eq!(std::mem::size_of::<DISPLAYCONFIG_MODE_INFO>(), 64);
     let mut path_count = 0;
     let mut mode_count = 0;
-    let result = unsafe { GetDisplayConfigBufferSizes(QDC_ALL_PATHS, &mut path_count, &mut mode_count) };
+    let result =
+        unsafe { GetDisplayConfigBufferSizes(QDC_ALL_PATHS, &mut path_count, &mut mode_count) };
     println!("GetDisplayConfigBufferSizes returned {}", result);
     let mut path_array = Vec::with_capacity(path_count as usize);
     let mut mode_array = Vec::with_capacity(mode_count as usize);
@@ -32,10 +42,13 @@ pub fn force_reinit_screen() -> i32 {
     println!("Got {} display paths", path_count);
     println!("Got {} display modes", mode_count);
     println!("QueryDisplayConfig returned {}", result);
-    let flags = SDC_FORCE_MODE_ENUMERATION | SDC_APPLY | SDC_USE_SUPPLIED_DISPLAY_CONFIG | SDC_SAVE_TO_DATABASE;
+    let flags = SDC_FORCE_MODE_ENUMERATION
+        | SDC_APPLY
+        | SDC_USE_SUPPLIED_DISPLAY_CONFIG
+        | SDC_SAVE_TO_DATABASE;
 
-   let result = unsafe { SetDisplayConfig(Some(&path_array), Some(&mode_array), flags) };
-   result
+    let result = unsafe { SetDisplayConfig(Some(&path_array), Some(&mode_array), flags) };
+    result
 }
 
 pub fn init() -> windows::core::Result<()> {
@@ -100,5 +113,23 @@ pub fn set_volume(volume: u32) -> anyhow::Result<()> {
         unsafe { default_device.Activate::<IAudioEndpointVolume>(CLSCTX_ALL, None) }?;
     let volume = volume as f32 / 100.0;
     unsafe { volume_control.SetMasterVolumeLevelScalar(volume, &GUID::zeroed()) }?;
+    Ok(())
+}
+
+pub fn shutdown(delay: Duration, msg: &str) -> anyhow::Result<()> {
+    let h_msg = HSTRING::from(msg);
+    let msg = PCWSTR::from_raw(h_msg.as_ptr());
+    let delay_secs = delay.as_secs().try_into()?;
+    let shutdown_result = unsafe {
+        InitiateSystemShutdownExW(
+            None,
+            msg,
+            delay_secs,
+            true,
+            false,
+            SHTDN_REASON_FLAG_PLANNED | SHTDN_REASON_MAJOR_OTHER,
+        )
+    };
+    shutdown_result.ok()?;
     Ok(())
 }
