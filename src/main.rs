@@ -94,7 +94,8 @@ fn main() {
     }
     // Otherwise, sleep until 17:20 (not 17:30 because of the 10 minute grace period)
     else {
-        let until = chrono::Local::now().with_hour(17).unwrap().with_minute(20).unwrap();
+        //let until = chrono::Local::now().with_hour(17).unwrap().with_minute(20).unwrap();
+        let until = chrono::Local::now().with_hour(13).unwrap().with_minute(47).unwrap();
         if now > until {
             panic!("Time is in the past!");
         }
