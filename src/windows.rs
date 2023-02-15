@@ -1,5 +1,5 @@
 use std::time::Duration;
-use windows::core::{GUID, HSTRING, PCWSTR};
+use windows::core::{GUID, HSTRING, PCWSTR, PCSTR};
 use windows::Win32::Devices::Display::{
     GetDisplayConfigBufferSizes, QueryDisplayConfig, SetDisplayConfig, DISPLAYCONFIG_MODE_INFO,
     DISPLAYCONFIG_PATH_INFO, DISPLAYCONFIG_TOPOLOGY_ID,
@@ -15,6 +15,7 @@ use windows::Win32::System::Diagnostics::Debug::Beep;
 use windows::Win32::System::Shutdown::{
     InitiateSystemShutdownExW, SHTDN_REASON_FLAG_PLANNED, SHTDN_REASON_MAJOR_OTHER,
 };
+use windows::Win32::Graphics::Printing::PRINTER_INFO_2A;
 
 // Forces Windows to reinit display settings with SetDisplayConfig and the provided flags
 pub fn force_reinit_screen() -> i32 {
@@ -132,4 +133,48 @@ pub fn shutdown(delay: Duration, msg: &str) -> anyhow::Result<()> {
     };
     shutdown_result.ok()?;
     Ok(())
+}
+
+pub fn list_printers() -> Vec<PRINTER_INFO_2A> {
+    let mut printers = Vec::new();
+    let level = 2;
+    let flags = 0;
+    let buffer_size = std::mem::size_of::<PRINTER_INFO_2A>();
+    let buffer = unsafe { std::alloc::alloc(std::alloc::Layout::from_size_align(buffer_size, 1).unwrap()) };
+    let mut buffer: *mut [u8] = unsafe { std::slice::from_raw_parts_mut(buffer, buffer_size) };
+    let mut needed = 0;
+    let mut returned = 0;
+    let mut ret_val = unsafe {
+        windows::Win32::Graphics::Printing::EnumPrintersA(
+            flags,
+            PCSTR::null(),
+            level,
+            Some(&mut *buffer),
+            &mut needed,
+            &mut returned,
+        )
+    };
+    while ret_val.0 == 0 {
+        unsafe {
+            let mut _buffer =std::alloc::alloc(std::alloc::Layout::from_size_align(buffer_size, 1).unwrap());
+            buffer = std::slice::from_raw_parts_mut(_buffer, buffer_size);
+            ret_val = windows::Win32::Graphics::Printing::EnumPrintersA(
+                flags,
+                PCSTR::null(),
+                level,
+                Some(&mut *buffer),
+                &mut needed,
+                &mut returned,
+            );
+        }
+    }
+    for i in 0..returned {
+        let printer = unsafe { &*(buffer as *mut PRINTER_INFO_2A).add(i as usize) };
+        printers.push(*printer);
+    }
+    unsafe {
+        std::alloc::dealloc(buffer as *mut u8, std::alloc::Layout::from_size_align(buffer_size, 1).unwrap());
+    }
+    printers
+
 }

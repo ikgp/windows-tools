@@ -142,4 +142,35 @@ fn main() {
         }
 
     }
+    #[cfg(windows)]
+    {
+        use kant_tools::windows::list_printers;
+        let printers = list_printers();
+        for printer in printers {
+            println!("Printer {{" );
+            println!("    pServerName: {:?}", printer.pServerName);
+            println!("    pPrinterName: {:?}", printer.pPrinterName);
+            println!("    pShareName: {:?}", printer.pShareName);
+            println!("    pPortName: {:?}", printer.pPortName);
+            println!("    pDriverName: {:?}", printer.pDriverName);
+            println!("    pComment: {:?}", printer.pComment);
+            println!("    pLocation: {:?}", printer.pLocation);
+            println!("    pDevMode: {:?}", printer.pDevMode);
+            println!("    pSepFile: {:?}", printer.pSepFile);
+            println!("    pPrintProcessor: {:?}", printer.pPrintProcessor);
+            println!("    pDatatype: {:?}", printer.pDatatype);
+            println!("    pParameters: {:?}", printer.pParameters);
+            println!("    pSecurityDescriptor: {:?}", printer.pSecurityDescriptor);
+            println!("    Attributes: {:?}", printer.Attributes);
+            println!("    Priority: {:?}", printer.Priority);
+            println!("    DefaultPriority: {:?}", printer.DefaultPriority);
+            println!("    StartTime: {:?}", printer.StartTime);
+            println!("    UntilTime: {:?}", printer.UntilTime);
+            println!("    Status: {:?}", printer.Status);
+            println!("    cJobs: {:?}", printer.cJobs);
+            println!("    AveragePPM: {:?}", printer.AveragePPM);
+            println!("}}" );
+
+        }
+    }
 }
