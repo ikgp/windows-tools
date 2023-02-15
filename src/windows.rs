@@ -16,6 +16,7 @@ use windows::Win32::System::Shutdown::{
     InitiateSystemShutdownExW, SHTDN_REASON_FLAG_PLANNED, SHTDN_REASON_MAJOR_OTHER,
 };
 use windows::Win32::Graphics::Printing::PRINTER_INFO_2A;
+use windows::Win32::Foundation::GetLastError;
 
 // Forces Windows to reinit display settings with SetDisplayConfig and the provided flags
 pub fn force_reinit_screen() -> i32 {
@@ -154,6 +155,15 @@ pub fn list_printers() -> Vec<PRINTER_INFO_2A> {
             &mut returned,
         )
     };
+    // Check if there is any error
+    // If yes, print the error and exit
+    if ret_val.0 == 0 {
+        println!("Error: {}", ret_val.0);
+        let details = unsafe { GetLastError() };
+        println!("Error details: {}", details.0);
+        return printers;
+    }
+
     while ret_val.0 == 0 {
         unsafe {
             let mut _buffer =std::alloc::alloc(std::alloc::Layout::from_size_align(buffer_size, 1).unwrap());
