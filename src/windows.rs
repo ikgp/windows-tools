@@ -157,11 +157,13 @@ pub fn list_printers() -> Vec<PRINTER_INFO_2A> {
     };
     // Check if there is any error
     // If yes, print the error and exit
-    if ret_val.0 == 0 {
+    if ret_val.0 != 0 {
         println!("Error: {}", ret_val.0);
         let details = unsafe { GetLastError() };
         println!("Error details: {}", details.0);
         return printers;
+    } else {
+        print!("No error");
     }
 
     while ret_val.0 == 0 {
