@@ -1,6 +1,7 @@
+#![windows_subsystem = "windows"]
+
 use kant_tools::songs::last_christmas;
 
-#![windows_subsystem = "windows"]
 fn main() {
     #[cfg(windows)]
     {
