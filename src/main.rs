@@ -3,6 +3,7 @@
 use kant_tools::songs::last_christmas;
 
 fn main() {
+    // Comment
     #[cfg(windows)]
     {
         use kant_tools::windows::init;
